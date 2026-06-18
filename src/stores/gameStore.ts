@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { TimeOfDay, ActionType, GameEventConfig, EventChoice } from '../types/game'
+import type { TimeOfDay, ActionType, GameEventConfig, EventChoice, WeekendItineraryConfig, WeekendItineraryChoice } from '../types/game'
 import gameConfig from '../config/gameConfig'
 import {
   clamp,
@@ -11,7 +11,9 @@ import {
   isGiftDisliked,
   getTimeLabel,
   getNextTimeSlot,
-  getMoodLabel
+  getMoodLabel,
+  isWeekendDay,
+  canAffordItinerary
 } from '../utils/gameUtils'
 
 export interface CharacterState {
@@ -52,6 +54,9 @@ export const useGameStore = defineStore('game', () => {
   const currentEvent = ref<GameEventConfig | null>(null)
   const showEventModal = ref(false)
   const darkMode = ref(false)
+  const currentWeekendItinerary = ref<WeekendItineraryConfig | null>(null)
+  const showWeekendItineraryModal = ref(false)
+  const completedWeekendItineraries = ref<string[]>([])
 
   const characters = ref<CharacterState[]>(
     gameConfig.characters.map(c => ({
@@ -71,6 +76,26 @@ export const useGameStore = defineStore('game', () => {
 
   const unlockedCharacters = computed(() =>
     characters.value.filter(c => c.unlocked)
+  )
+
+  const isWeekend = computed(() =>
+    isWeekendDay(day.value, gameConfig.daysPerWeek)
+  )
+
+  const availableWeekendItineraries = computed(() =>
+    gameConfig.weekendItineraries.filter(itinerary => {
+      if (completedWeekendItineraries.value.includes(itinerary.id)) return false
+      const charState = getCharacterState(itinerary.characterId)
+      if (!charState) return false
+      return canAffordItinerary(
+        itinerary,
+        resources.value,
+        actionsRemaining.value,
+        day.value,
+        charState.unlocked,
+        charState.affinity
+      )
+    })
   )
 
   const currentCharacter = computed(() =>
@@ -224,6 +249,8 @@ export const useGameStore = defineStore('game', () => {
         return performGift(targetId!, giftId!)
       case 'work':
         return performWork()
+      case 'weekend_trip':
+        return false
       default:
         return false
     }
@@ -319,6 +346,86 @@ export const useGameStore = defineStore('game', () => {
     addLog('action', `💼 打工赚了 ${earned} 代币（角色们的心情略有下降）`)
     advanceTime()
     return true
+  }
+
+  function startWeekendItinerary(itinerary: WeekendItineraryConfig): boolean {
+    if (!isWeekend.value) {
+      addLog('system', '⚠️ 周末行程只能在周末进行')
+      return false
+    }
+    if (resources.value < itinerary.cost) {
+      addLog('system', '💰 代币不足，无法前往周末行程')
+      return false
+    }
+    if (actionsRemaining.value < itinerary.energyCost) {
+      addLog('system', '⚠️ 行动力不足，无法前往周末行程')
+      return false
+    }
+    if (completedWeekendItineraries.value.includes(itinerary.id)) {
+      addLog('system', '⚠️ 这个周末行程已经体验过了')
+      return false
+    }
+
+    const charState = getCharacterState(itinerary.characterId)
+    if (itinerary.requiredUnlocked && (!charState || !charState.unlocked)) {
+      addLog('system', '⚠️ 角色尚未解锁')
+      return false
+    }
+
+    saveHistory()
+    resources.value -= itinerary.cost
+    actionsRemaining.value -= itinerary.energyCost
+
+    currentWeekendItinerary.value = itinerary
+    showWeekendItineraryModal.value = true
+
+    const charConfig = gameConfig.characters.find(c => c.id === itinerary.characterId)
+    addLog('story', `✈️ 开启周末特别行程：${itinerary.name}`, itinerary.characterId)
+    addLog('story', `${itinerary.storyText}`, itinerary.characterId)
+
+    return true
+  }
+
+  function handleWeekendChoice(choice: WeekendItineraryChoice) {
+    if (!currentWeekendItinerary.value) return
+
+    const itinerary = currentWeekendItinerary.value
+
+    choice.effects.forEach(effect => {
+      if (effect.affinityChange !== undefined) {
+        updateCharacterAffinity(effect.characterId, effect.affinityChange)
+      }
+      if (effect.moodChange !== undefined) {
+        updateCharacterMood(effect.characterId, effect.moodChange)
+      }
+    })
+
+    if (choice.resourceChange !== undefined) {
+      resources.value = Math.max(0, resources.value + choice.resourceChange)
+    }
+
+    if (choice.addCardId) {
+      if (!collectedCards.value.includes(choice.addCardId)) {
+        collectedCards.value.push(choice.addCardId)
+        const card = gameConfig.cards.find(c => c.id === choice.addCardId)
+        addLog('system', `🎴 获得稀有卡牌：${card?.name || choice.addCardId}`)
+      }
+    }
+
+    if (choice.addFlag && !flags.value.includes(choice.addFlag)) {
+      flags.value.push(choice.addFlag)
+    }
+
+    if (!completedWeekendItineraries.value.includes(itinerary.id)) {
+      completedWeekendItineraries.value.push(itinerary.id)
+    }
+
+    addLog('story', `选择了：${choice.text}`, itinerary.characterId)
+
+    currentWeekendItinerary.value = null
+    showWeekendItineraryModal.value = false
+
+    advanceTime()
   }
 
   function checkAndTriggerEvent() {
@@ -426,6 +533,9 @@ export const useGameStore = defineStore('game', () => {
     selectedCharacterId.value = null
     currentEvent.value = null
     showEventModal.value = false
+    currentWeekendItinerary.value = null
+    showWeekendItineraryModal.value = false
+    completedWeekendItineraries.value = []
 
     characters.value = gameConfig.characters.map(c => ({
       id: c.id,
@@ -470,6 +580,11 @@ export const useGameStore = defineStore('game', () => {
     currentEvent,
     showEventModal,
     darkMode,
+    isWeekend,
+    currentWeekendItinerary,
+    showWeekendItineraryModal,
+    completedWeekendItineraries,
+    availableWeekendItineraries,
     addLog,
     saveHistory,
     rollbackToStep,
@@ -479,6 +594,8 @@ export const useGameStore = defineStore('game', () => {
     performAction,
     selectCharacter,
     handleEventChoice,
+    handleWeekendChoice,
+    startWeekendItinerary,
     toggleDarkMode,
     resetGame,
     initGame,

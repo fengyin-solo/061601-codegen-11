@@ -1,4 +1,4 @@
-import type { TimeOfDay, MoodLevel, GameConfig, CharacterConfig } from '../types/game'
+import type { TimeOfDay, MoodLevel, GameConfig, CharacterConfig, WeekendItineraryConfig } from '../types/game'
 
 export function getMoodLevel(mood: number): MoodLevel {
   if (mood >= 80) return 'happy'
@@ -135,6 +135,27 @@ export function calculateChatAffinity(
   }
 
   return Math.round(baseChange * 10) / 10
+}
+
+export function isWeekendDay(day: number, daysPerWeek: number): boolean {
+  const dayOfWeek = ((day - 1) % daysPerWeek) + 1
+  return dayOfWeek === 6 || dayOfWeek === 7
+}
+
+export function canAffordItinerary(
+  itinerary: WeekendItineraryConfig,
+  resources: number,
+  energy: number,
+  day: number,
+  characterUnlocked: boolean,
+  characterAffinity: number
+): boolean {
+  if (day < itinerary.minDay) return false
+  if (resources < itinerary.cost) return false
+  if (energy < itinerary.energyCost) return false
+  if (itinerary.requiredUnlocked && !characterUnlocked) return false
+  if (itinerary.minAffinity !== undefined && characterAffinity < itinerary.minAffinity) return false
+  return true
 }
 
 export function calculateGiftAffinity(

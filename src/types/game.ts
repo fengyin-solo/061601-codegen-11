@@ -2,9 +2,38 @@ export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night'
 
 export type MoodLevel = 'happy' | 'good' | 'neutral' | 'bad' | 'angry'
 
-export type ActionType = 'chat' | 'gift' | 'work'
+export type ActionType = 'chat' | 'gift' | 'work' | 'weekend_trip'
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary'
+
+export interface WeekendItineraryChoice {
+  id: string
+  text: string
+  effects: {
+    characterId: string
+    affinityChange?: number
+    moodChange?: number
+  }[]
+  resourceChange?: number
+  addCardId?: string
+  addFlag?: string
+}
+
+export interface WeekendItineraryConfig {
+  id: string
+  name: string
+  icon: string
+  description: string
+  characterId: string
+  cost: number
+  energyCost: number
+  minDay: number
+  minAffinity?: number
+  requiredUnlocked?: boolean
+  choices: WeekendItineraryChoice[]
+  rewardCardId?: string
+  storyText: string
+}
 
 export interface CharacterConfig {
   id: string
@@ -99,6 +128,7 @@ export interface GameConfig {
   gifts: GiftConfig[]
   cards: CardConfig[]
   events: GameEventConfig[]
+  weekendItineraries: WeekendItineraryConfig[]
   actions: ActionConfig[]
   workRewards: { min: number; max: number }
 }

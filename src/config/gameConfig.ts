@@ -96,7 +96,11 @@ export const gameConfig: GameConfig = {
     { id: 'sufei_epic_1', name: '深夜游戏', characterId: 'sufei', rarity: 'epic', image: '🎮', description: '一起打游戏到深夜', unlockCondition: 'sufei_affinity_70' },
     { id: 'sufei_legendary_1', name: '夕阳下的吻', characterId: 'sufei', rarity: 'legendary', image: '🌅', description: '咖啡馆关门前的浪漫时刻', unlockCondition: 'sufei_affinity_100' },
     { id: 'yeqing_common_1', name: '月下身影', characterId: 'yeqing', rarity: 'common', image: '🌙', description: '月光下独自散步的叶青', unlockCondition: 'meet_yeqing' },
-    { id: 'yeqing_rare_1', name: '琴音缭绕', characterId: 'yeqing', rarity: 'rare', image: '🎹', description: '叶青弹奏钢琴的样子', unlockCondition: 'yeqing_affinity_40' }
+    { id: 'yeqing_rare_1', name: '琴音缭绕', characterId: 'yeqing', rarity: 'rare', image: '🎹', description: '叶青弹奏钢琴的样子', unlockCondition: 'yeqing_affinity_40' },
+    { id: 'linxiaoyu_weekend_1', name: '星空下的约定', characterId: 'linxiaoyu', rarity: 'epic', image: '🌟', description: '和小雨在观星台许下的星空之约', unlockCondition: 'weekend_stargazing_linxiaoyu' },
+    { id: 'sufei_weekend_1', name: '海上日出', characterId: 'sufei', rarity: 'epic', image: '🏞️', description: '和苏菲一起看海上的第一缕阳光', unlockCondition: 'weekend_seaside_sufei' },
+    { id: 'yeqing_weekend_1', name: '古寺钟声', characterId: 'yeqing', rarity: 'epic', image: '⛩️', description: '与叶青在山间古寺的静默时光', unlockCondition: 'weekend_mountain_yeqing' },
+    { id: 'weekend_legendary_1', name: '命运的交汇', characterId: 'linxiaoyu', rarity: 'legendary', image: '💫', description: '所有人在花火大会上的命运交错', unlockCondition: 'weekend_fireworks_all' }
   ],
 
   events: [
@@ -302,7 +306,171 @@ export const gameConfig: GameConfig = {
   actions: [
     { type: 'chat', name: '聊天', icon: '💬', description: '和角色聊聊天，增进感情', energyCost: 1 },
     { type: 'gift', name: '送礼', icon: '🎁', description: '送礼物给角色，效果因人而异', energyCost: 1 },
-    { type: 'work', name: '打工', icon: '💼', description: '辛苦工作赚取代币', energyCost: 2 }
+    { type: 'work', name: '打工', icon: '💼', description: '辛苦工作赚取代币', energyCost: 2 },
+    { type: 'weekend_trip', name: '周末行程', icon: '✈️', description: '周末特别行程，高成本换取稀有剧情', energyCost: 3 }
+  ],
+
+  weekendItineraries: [
+    {
+      id: 'stargazing_linxiaoyu',
+      name: '星空观星之旅',
+      icon: '🔭',
+      description: '和小雨一起去郊外观星台看星星，远离城市喧嚣的浪漫之夜',
+      characterId: 'linxiaoyu',
+      cost: 60,
+      energyCost: 3,
+      minDay: 5,
+      minAffinity: 30,
+      requiredUnlocked: true,
+      storyText: '你们驱车来到郊外的观星台。夜幕降临，满天繁星如钻石般洒落在深邃的天穹上。小雨轻轻依偎在你身边，安静地仰望着星空……',
+      choices: [
+        {
+          id: 'name_a_star',
+          text: '为小雨命名一颗星星',
+          effects: [{ characterId: 'linxiaoyu', affinityChange: 20, moodChange: 25 }],
+          resourceChange: -20,
+          addCardId: 'linxiaoyu_weekend_1',
+          addFlag: 'weekend_stargazing_linxiaoyu'
+        },
+        {
+          id: 'hold_hand',
+          text: '悄悄牵起她的手',
+          effects: [{ characterId: 'linxiaoyu', affinityChange: 15, moodChange: 20 }],
+          addFlag: 'weekend_stargazing_linxiaoyu'
+        },
+        {
+          id: 'take_photo',
+          text: '拍下这片星空留作纪念',
+          effects: [{ characterId: 'linxiaoyu', affinityChange: 10, moodChange: 15 }],
+          addCardId: 'linxiaoyu_weekend_1',
+          addFlag: 'weekend_stargazing_linxiaoyu'
+        }
+      ],
+      rewardCardId: 'linxiaoyu_weekend_1'
+    },
+    {
+      id: 'seaside_sufei',
+      name: '海滨日出之行',
+      icon: '🏖️',
+      description: '和苏菲一起去海边看日出，享受清晨的海风和浪花',
+      characterId: 'sufei',
+      cost: 70,
+      energyCost: 3,
+      minDay: 5,
+      minAffinity: 30,
+      requiredUnlocked: true,
+      storyText: '凌晨四点，你和苏菲踏上了去海边的路。天边渐渐泛起橘红色的光晕，海浪轻拍沙滩，苏菲脱掉鞋子踩在细软的沙滩上……',
+      choices: [
+        {
+          id: 'surf_together',
+          text: '一起冲浪迎接日出',
+          effects: [{ characterId: 'sufei', affinityChange: 20, moodChange: 25 }],
+          resourceChange: -15,
+          addCardId: 'sufei_weekend_1',
+          addFlag: 'weekend_seaside_sufei'
+        },
+        {
+          id: 'beach_walk',
+          text: '沿沙滩漫步聊天',
+          effects: [{ characterId: 'sufei', affinityChange: 15, moodChange: 20 }],
+          addFlag: 'weekend_seaside_sufei'
+        },
+        {
+          id: 'build_sandcastle',
+          text: '一起堆沙堡',
+          effects: [{ characterId: 'sufei', affinityChange: 12, moodChange: 18 }],
+          addCardId: 'sufei_weekend_1',
+          addFlag: 'weekend_seaside_sufei'
+        }
+      ],
+      rewardCardId: 'sufei_weekend_1'
+    },
+    {
+      id: 'mountain_yeqing',
+      name: '山间古寺探幽',
+      icon: '⛩️',
+      description: '和叶青一起去深山中的古寺探访，感受寂静与禅意',
+      characterId: 'yeqing',
+      cost: 80,
+      energyCost: 3,
+      minDay: 10,
+      minAffinity: 25,
+      requiredUnlocked: true,
+      storyText: '山路蜿蜒而上，古寺隐藏在云雾缭绕的山巅。叶青走在前面，步伐轻快而沉稳。寺庙的钟声悠远传来，仿佛能洗涤一切杂念……',
+      choices: [
+        {
+          id: 'pray_together',
+          text: '一起在佛前许愿',
+          effects: [{ characterId: 'yeqing', affinityChange: 20, moodChange: 25 }],
+          resourceChange: -10,
+          addCardId: 'yeqing_weekend_1',
+          addFlag: 'weekend_mountain_yeqing'
+        },
+        {
+          id: 'listen_bell',
+          text: '安静地听钟声和叶青谈心',
+          effects: [{ characterId: 'yeqing', affinityChange: 18, moodChange: 22 }],
+          addFlag: 'weekend_mountain_yeqing'
+        },
+        {
+          id: 'explore_trail',
+          text: '探索寺庙后山的小径',
+          effects: [{ characterId: 'yeqing', affinityChange: 15, moodChange: 20 }],
+          addCardId: 'yeqing_weekend_1',
+          addFlag: 'weekend_mountain_yeqing'
+        }
+      ],
+      rewardCardId: 'yeqing_weekend_1'
+    },
+    {
+      id: 'fireworks_all',
+      name: '花火大会之夜',
+      icon: '🎆',
+      description: '小镇一年一度的花火大会，所有人都会到场。这是见证命运交汇的珍贵时刻',
+      characterId: 'linxiaoyu',
+      cost: 100,
+      energyCost: 3,
+      minDay: 14,
+      requiredUnlocked: false,
+      storyText: '花火大会的夜空被绚烂的烟花照亮。林小雨站在河岸边仰望着，苏菲在小吃摊前忙碌地张罗着，而叶青独自坐在远处的石阶上……每个人的身影都被花火映照出不同的色彩。',
+      choices: [
+        {
+          id: 'watch_with_xiaoyu',
+          text: '陪小雨看烟花',
+          effects: [
+            { characterId: 'linxiaoyu', affinityChange: 18, moodChange: 20 },
+            { characterId: 'sufei', affinityChange: -5 },
+            { characterId: 'yeqing', affinityChange: -3 }
+          ],
+          addCardId: 'weekend_legendary_1',
+          addFlag: 'weekend_fireworks_all'
+        },
+        {
+          id: 'help_sufei',
+          text: '帮苏菲经营摊位',
+          effects: [
+            { characterId: 'sufei', affinityChange: 18, moodChange: 20 },
+            { characterId: 'linxiaoyu', affinityChange: -5 },
+            { characterId: 'yeqing', affinityChange: -3 }
+          ],
+          resourceChange: 20,
+          addCardId: 'weekend_legendary_1',
+          addFlag: 'weekend_fireworks_all'
+        },
+        {
+          id: 'sit_with_yeqing',
+          text: '去陪叶青坐一会儿',
+          effects: [
+            { characterId: 'yeqing', affinityChange: 18, moodChange: 20 },
+            { characterId: 'linxiaoyu', affinityChange: -3 },
+            { characterId: 'sufei', affinityChange: -5 }
+          ],
+          addCardId: 'weekend_legendary_1',
+          addFlag: 'weekend_fireworks_all'
+        }
+      ],
+      rewardCardId: 'weekend_legendary_1'
+    }
   ],
 
   workRewards: { min: 15, max: 35 }
