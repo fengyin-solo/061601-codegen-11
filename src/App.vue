@@ -30,6 +30,10 @@ function getCharacterName(characterId: string): string {
 }
 
 function selectItinerary(itinerary: WeekendItineraryConfig) {
+  if (gameStore.actionsRemaining < itinerary.energyCost) {
+    gameStore.addLog('system', '⚠️ 行动力不足，无法前往周末行程')
+    return
+  }
   const success = gameStore.startWeekendItinerary(itinerary)
   if (success) {
     showWeekendSelect.value = false
@@ -103,6 +107,7 @@ onMounted(() => {
               v-for="it in gameStore.availableWeekendItineraries"
               :key="it.id"
               class="itinerary-card"
+              :class="{ disabled: gameStore.actionsRemaining < it.energyCost }"
               @click="selectItinerary(it)"
             >
               <div class="it-header">
@@ -225,6 +230,17 @@ onMounted(() => {
   border-color: #f59e0b;
   background: #fffbeb;
   transform: translateX(4px);
+}
+
+.itinerary-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.itinerary-card.disabled:hover {
+  border-color: transparent;
+  background: var(--bg-tertiary);
+  transform: none;
 }
 
 [data-theme='dark'] .itinerary-card:hover {

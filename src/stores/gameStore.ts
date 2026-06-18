@@ -12,8 +12,7 @@ import {
   getTimeLabel,
   getNextTimeSlot,
   getMoodLabel,
-  isWeekendDay,
-  canAffordItinerary
+  isWeekendDay
 } from '../utils/gameUtils'
 
 export interface CharacterState {
@@ -85,17 +84,18 @@ export const useGameStore = defineStore('game', () => {
   const availableWeekendItineraries = computed(() =>
     gameConfig.weekendItineraries.filter(itinerary => {
       if (completedWeekendItineraries.value.includes(itinerary.id)) return false
+      if (day.value < itinerary.minDay) return false
       const charState = getCharacterState(itinerary.characterId)
       if (!charState) return false
-      return canAffordItinerary(
-        itinerary,
-        resources.value,
-        actionsRemaining.value,
-        day.value,
-        charState.unlocked,
-        charState.affinity
-      )
+      if (itinerary.requiredUnlocked && !charState.unlocked) return false
+      if (itinerary.minAffinity !== undefined && charState.affinity < itinerary.minAffinity) return false
+      if (resources.value < itinerary.cost) return false
+      return true
     })
+  )
+
+  const hasActionableWeekendItinerary = computed(() =>
+    availableWeekendItineraries.value.some(it => actionsRemaining.value >= it.energyCost)
   )
 
   const currentCharacter = computed(() =>
@@ -201,6 +201,16 @@ export const useGameStore = defineStore('game', () => {
     }
     checkAndTriggerEvent()
   }
+
+  function skipTime() {
+    if (currentEvent.value || currentWeekendItinerary.value) return
+    saveHistory()
+    advanceTime()
+  }
+
+  const canSkipTime = computed(() =>
+    !currentEvent.value && !currentWeekendItinerary.value
+  )
 
   function nextDay() {
     day.value++
@@ -585,6 +595,7 @@ export const useGameStore = defineStore('game', () => {
     showWeekendItineraryModal,
     completedWeekendItineraries,
     availableWeekendItineraries,
+    hasActionableWeekendItinerary,
     addLog,
     saveHistory,
     rollbackToStep,
@@ -596,6 +607,8 @@ export const useGameStore = defineStore('game', () => {
     handleEventChoice,
     handleWeekendChoice,
     startWeekendItinerary,
+    skipTime,
+    canSkipTime,
     toggleDarkMode,
     resetGame,
     initGame,

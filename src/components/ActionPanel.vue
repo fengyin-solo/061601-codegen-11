@@ -18,8 +18,10 @@ const isWeekend = computed(() => gameStore.isWeekend)
 
 const hasAvailableItineraries = computed(() => gameStore.availableWeekendItineraries.length > 0)
 
+const hasActionableWeekendItinerary = computed(() => gameStore.hasActionableWeekendItinerary)
+
 const canWeekendTrip = computed(() =>
-  isWeekend.value && canPerformAction.value && hasAvailableItineraries.value
+  isWeekend.value && canPerformAction.value && hasActionableWeekendItinerary.value
 )
 
 function doChat() {
@@ -92,24 +94,35 @@ function doWeekendTrip() {
       </button>
     </div>
 
-    <div v-if="!hasSelectedCharacter && !isWeekend" class="hint">
+    <div v-if="!hasSelectedCharacter && !isWeekend && canPerformAction" class="hint">
       💡 请先选择一个角色进行互动
     </div>
 
-    <div v-if="isWeekend && !hasAvailableItineraries" class="hint weekend-hint">
+    <div v-if="isWeekend && !hasAvailableItineraries && canPerformAction" class="hint weekend-hint">
       ✈️ 周末特别行程已开启！但没有可用的行程，请提升好感或积攒代币
     </div>
 
-    <div v-if="isWeekend && hasAvailableItineraries && !canPerformAction" class="hint weekend-hint">
-      ⚡ 周末行程已就绪，但行动力不足
+    <div v-if="isWeekend && hasAvailableItineraries && !hasActionableWeekendItinerary" class="hint weekend-hint">
+      ⚡ 周末行程已就绪，但行动力不足（需要 3 点），请跳过时段等待明天
     </div>
 
     <div v-if="!isWeekend && !canPerformAction" class="hint warning">
-      ⚡ 今天的行动力已用完，等待明天吧~
+      ⚡ 今天的行动力已用完，点击下方「跳过时段」继续
     </div>
 
-    <div v-if="isWeekend && canPerformAction && hasAvailableItineraries" class="hint weekend-available">
+    <div v-if="isWeekend && canPerformAction && hasActionableWeekendItinerary" class="hint weekend-available">
       🎉 周末特别行程开放中！点击「周末行程」开启稀有剧情
+    </div>
+
+    <div class="skip-time-section">
+      <button
+        class="skip-time-btn"
+        :disabled="!gameStore.canSkipTime"
+        @click="gameStore.skipTime()"
+      >
+        <span class="skip-icon">⏭️</span>
+        <span class="skip-text">{{ gameStore.timeSlot === 'night' ? '结束今天' : '跳过时段' }}</span>
+      </button>
     </div>
   </div>
 </template>
@@ -229,6 +242,37 @@ function doWeekendTrip() {
 @keyframes weekendPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.8; }
+}
+
+.skip-time-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+}
+
+.skip-time-btn {
+  width: 100%;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.skip-time-btn:hover:not(:disabled) {
+  background: var(--accent-light);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.skip-icon {
+  font-size: 18px;
 }
 
 @media (max-width: 600px) {
